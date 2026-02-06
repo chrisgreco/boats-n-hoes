@@ -3,7 +3,7 @@
 import { useConversation } from '@elevenlabs/react';
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Phone, PhoneOff, Volume2, Waves, Anchor } from 'lucide-react';
+import { Mic, Phone, PhoneOff, Volume2 } from 'lucide-react';
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || 'agent_0501kgsnecr8ecgv46te0m5wr2dm';
 
@@ -60,22 +60,30 @@ export default function VoiceChat() {
   }, [conversation]);
 
   const isConnected = conversation.status === 'connected';
+  const isConnecting = conversation.status === 'connecting';
   const isSpeaking = conversation.isSpeaking;
+
+  const handleOrbClick = () => {
+    if (isConnected) {
+      stopConversation();
+    } else if (!isConnecting) {
+      startConversation();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Voice Status & Visualizer */}
-      <div className="flex-1 flex flex-col items-center justify-center relative min-h-[300px]">
-        {/* Background waves when connected */}
+      {/* Voice Status & Visualizer - THE ORB IS THE BUTTON */}
+      <div className="flex-1 flex flex-col items-center justify-center relative">
+        {/* Background wave rings when connected */}
         <AnimatePresence>
           {isConnected && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 overflow-hidden"
+              className="absolute inset-0 overflow-hidden pointer-events-none"
             >
-              {/* Animated sound wave rings */}
               {[...Array(3)].map((_, i) => (
                 <motion.div
                   key={i}
@@ -95,8 +103,8 @@ export default function VoiceChat() {
                   <div
                     className="rounded-full border-2"
                     style={{
-                      width: `${150 + i * 60}px`,
-                      height: `${150 + i * 60}px`,
+                      width: `${120 + i * 50}px`,
+                      height: `${120 + i * 50}px`,
                       borderColor: isSpeaking ? '#D4AF37' : '#00D4FF',
                     }}
                   />
@@ -106,22 +114,28 @@ export default function VoiceChat() {
           )}
         </AnimatePresence>
 
-        {/* Center orb */}
-        <motion.div
-          className="relative z-10 flex flex-col items-center"
+        {/* THE ORB - This IS the call/hangup button */}
+        <motion.button
+          onClick={handleOrbClick}
+          disabled={isConnecting}
+          className="relative z-10 flex flex-col items-center cursor-pointer disabled:cursor-wait focus:outline-none"
+          whileHover={{ scale: isConnecting ? 1 : 1.05 }}
+          whileTap={{ scale: isConnecting ? 1 : 0.95 }}
           animate={{
-            scale: isConnected ? (isSpeaking ? [1, 1.1, 1] : 1) : 1,
+            scale: isConnected ? (isSpeaking ? [1, 1.08, 1] : 1) : 1,
           }}
           transition={{ duration: 0.5, repeat: isSpeaking ? Infinity : 0 }}
         >
           {/* Main circle */}
           <motion.div
-            className={`w-32 h-32 rounded-full flex items-center justify-center brutal-border ${
+            className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center border-[3px] border-navy transition-colors duration-300 ${
               isConnected
                 ? isSpeaking
                   ? 'bg-gold'
                   : 'bg-electric-blue'
-                : 'bg-navy'
+                : isConnecting
+                ? 'bg-sunset'
+                : 'bg-lime'
             }`}
             style={{
               boxShadow: isConnected
@@ -130,45 +144,51 @@ export default function VoiceChat() {
                   : '0 0 40px rgba(0, 212, 255, 0.3), 6px 6px 0px #0A1628'
                 : '6px 6px 0px #0A1628',
             }}
-            whileHover={!isConnected ? { scale: 1.05 } : {}}
           >
             {isConnected ? (
               isSpeaking ? (
-                <Volume2 className="w-12 h-12 text-navy" />
+                <Volume2 className="w-10 h-10 sm:w-12 sm:h-12 text-navy" />
               ) : (
-                <Mic className="w-12 h-12 text-navy" />
+                <Mic className="w-10 h-10 sm:w-12 sm:h-12 text-navy" />
               )
+            ) : isConnecting ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                <Phone className="w-10 h-10 sm:w-12 sm:h-12 text-navy" />
+              </motion.div>
             ) : (
-              <Anchor className="w-12 h-12 text-gold" />
+              <Phone className="w-10 h-10 sm:w-12 sm:h-12 text-navy" />
             )}
           </motion.div>
 
           {/* Status text */}
           <motion.p
-            className="mt-4 font-display text-xl tracking-wider"
+            className="mt-3 font-display text-lg sm:text-xl tracking-wider text-cream select-none"
             animate={{ opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
             {isConnected
               ? isSpeaking
                 ? 'CAPTAIN PRESTIGE IS SPEAKING...'
-                : 'LISTENING...'
-              : conversation.status === 'connecting'
+                : 'LISTENING... TAP TO HANG UP'
+              : isConnecting
               ? 'CONNECTING...'
               : 'TAP TO CALL CAPTAIN PRESTIGE'}
           </motion.p>
 
           {/* Audio bars visualization */}
           {isConnected && (
-            <div className="flex items-end gap-1 mt-3 h-8">
+            <div className="flex items-end gap-1 mt-2 h-6">
               {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={i}
                   className={`w-1.5 rounded-full ${isSpeaking ? 'bg-gold' : 'bg-electric-blue/50'}`}
                   animate={{
                     height: isSpeaking
-                      ? [8, Math.random() * 28 + 4, 8]
-                      : [4, Math.random() * 8 + 4, 4],
+                      ? [6, Math.random() * 22 + 4, 6]
+                      : [3, Math.random() * 6 + 3, 3],
                   }}
                   transition={{
                     duration: isSpeaking ? 0.3 + Math.random() * 0.3 : 1 + Math.random(),
@@ -179,14 +199,34 @@ export default function VoiceChat() {
               ))}
             </div>
           )}
-        </motion.div>
+        </motion.button>
+
+        {/* Hang up hint when connected */}
+        {isConnected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 z-10"
+          >
+            <motion.button
+              onClick={stopConversation}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center gap-2 px-5 py-2 bg-hot-pink text-white font-display text-sm tracking-wider border-[3px] border-navy cursor-pointer"
+              style={{ boxShadow: '4px 4px 0px #0A1628' }}
+            >
+              <PhoneOff className="w-4 h-4" />
+              END CALL
+            </motion.button>
+          </motion.div>
+        )}
       </div>
 
       {/* Transcript area */}
       {transcript.length > 0 && (
         <div
           ref={scrollRef}
-          className="mx-4 mb-4 max-h-[200px] overflow-y-auto rounded-lg glass-dark p-3 space-y-2"
+          className="mx-4 mb-2 max-h-[150px] overflow-y-auto rounded-lg glass-dark p-3 space-y-2"
         >
           {transcript.map((msg, i) => (
             <motion.div
@@ -214,41 +254,15 @@ export default function VoiceChat() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-4 mb-4 p-3 bg-hot-pink/20 border border-hot-pink/40 rounded-lg text-hot-pink text-sm font-body text-center"
+          className="mx-4 mb-2 p-3 bg-hot-pink/20 border border-hot-pink/40 rounded-lg text-hot-pink text-sm font-body text-center"
         >
           {error}
         </motion.div>
       )}
 
-      {/* Call controls */}
-      <div className="flex items-center justify-center gap-6 p-6 border-t-[3px] border-navy/20">
-        {!isConnected ? (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={startConversation}
-            disabled={conversation.status === 'connecting'}
-            className="w-20 h-20 rounded-full bg-lime brutal-border brutal-shadow flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Phone className="w-8 h-8 text-navy" />
-          </motion.button>
-        ) : (
-          <>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={stopConversation}
-              className="w-20 h-20 rounded-full bg-hot-pink brutal-border brutal-shadow flex items-center justify-center"
-            >
-              <PhoneOff className="w-8 h-8 text-white" />
-            </motion.button>
-          </>
-        )}
-      </div>
-
-      {/* Voice mode label */}
-      <div className="text-center pb-4">
-        <p className="font-display text-xs tracking-[0.3em] text-navy/40">
+      {/* Footer label */}
+      <div className="text-center py-2 flex-shrink-0">
+        <p className="font-display text-[10px] tracking-[0.25em] text-cream/30">
           POWERED BY ELEVENLABS + PRESTIGE WORLDWIDE AI
         </p>
       </div>
