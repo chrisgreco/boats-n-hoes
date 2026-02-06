@@ -91,3 +91,64 @@ export interface SwipeProfile {
   distance_miles: number;
   mutual_interests: string[];
 }
+
+// ─── BOATS N' BROS (Bumble BFF-style) ───────────────────
+
+export interface BroProfile {
+  user: User;
+  vibe: 'chill' | 'party' | 'adventure' | 'fishing' | 'watersports';
+  boat_preferences: string[];
+  availability: string;
+  crew_size_preferred: number;
+  fun_fact: string;
+  distance_miles: number;
+  mutual_interests: string[];
+}
+
+export interface Crew {
+  id: string;
+  name: string;
+  captain_id: string;
+  captain?: User;
+  members: User[];
+  max_size: number;
+  vibe: 'chill' | 'party' | 'adventure' | 'fishing' | 'watersports';
+  description: string;
+  next_trip?: string;
+  avatar_url: string;
+  created_at: string;
+}
+
+// ─── AGGREGATED LISTINGS (Boatsetter / GetMyBoat / etc.) ─
+
+export type AggregatorSource = 'boatsetter' | 'getmyboat' | 'click_and_boat' | 'sailo';
+
+export interface AggregatedListing {
+  id: string;
+  source: AggregatorSource;
+  external_url: string;
+  name: string;
+  type: 'yacht' | 'sailboat' | 'speedboat' | 'pontoon' | 'catamaran' | 'fishing' | 'houseboat' | 'jet_ski' | 'center_console';
+  description: string;
+  price_per_hour: number | null;
+  price_per_day: number | null;
+  currency: string;
+  capacity: number;
+  length_ft: number;
+  year: number | null;
+  location: string;
+  city: string;
+  state: string;
+  images: string[];
+  amenities: string[];
+  captain_included: boolean;
+  instant_book: boolean;
+  rating: number;
+  review_count: number;
+  owner_name: string;
+  owner_avatar: string | null;
+  owner_response_rate: number;
+  owner_response_time: string;
+  cancellation_policy: 'flexible' | 'moderate' | 'strict';
+  fetched_at: string;
+}

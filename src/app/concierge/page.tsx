@@ -5,26 +5,48 @@ import dynamic from 'next/dynamic';
 import Navigation from '@/components/Navigation';
 import { mockMessages } from '@/lib/mock-data';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, Sparkles, Anchor, Mic, MessageSquare, Phone, Volume2, Waves } from 'lucide-react';
-import type { Message } from '@/lib/types';
+import { Bot, Send, Sparkles, Anchor, Mic, MessageSquare, Phone, Volume2, Waves, Globe, ExternalLink, Search } from 'lucide-react';
+import type { Message, AggregatedListing } from '@/lib/types';
+import { mockAggregatedListings } from '@/lib/mock-data';
 
 // Dynamic import VoiceChat to avoid SSR issues with microphone APIs
 const VoiceChat = dynamic(() => import('@/components/VoiceChat'), { ssr: false });
 
 const suggestedPrompts = [
-  'Find me a yacht for 20 people',
-  'Best boats in Miami',
-  'Plan a bachelor party',
-  'Catalina Wine Mixer packages',
+  'Find me a yacht for 20 in Miami under $800/hr',
+  'Best fishing charters in Key West',
+  'Cheapest pontoon near Lake Tahoe',
+  'Catalina Wine Mixer catamaran',
+  'Compare Boatsetter vs GetMyBoat prices',
+  'Party boat with DJ booth for bachelor party',
 ];
 
+// Helper to find relevant listings for AI responses
+function findListings(query: string): AggregatedListing[] {
+  const q = query.toLowerCase();
+  return mockAggregatedListings.filter(l => {
+    const text = `${l.name} ${l.type} ${l.location} ${l.description} ${l.amenities.join(' ')}`.toLowerCase();
+    return q.split(' ').some(word => word.length > 3 && text.includes(word));
+  }).slice(0, 3);
+}
+
+function formatListingResponse(listings: AggregatedListing[]): string {
+  if (listings.length === 0) return '';
+  const cards = listings.map(l => {
+    const price = l.price_per_hour ? `$${l.price_per_hour}/hr` : `$${l.price_per_day}/day`;
+    const captain = l.captain_included ? 'Captain included' : 'BYOC';
+    return `${l.name} (${l.length_ft}ft ${l.type}, ${price}, ${l.location}) via ${l.source === 'getmyboat' ? 'GetMyBoat' : l.source === 'boatsetter' ? 'Boatsetter' : l.source === 'click_and_boat' ? 'Click&Boat' : 'Sailo'} - ${l.rating}★ (${l.review_count} reviews) - ${captain}`;
+  });
+  return '\n\nHere\'s what I found across our partner platforms:\n• ' + cards.join('\n• ');
+}
+
 const cannedResponses = [
-  "Absolutely, captain! I've found 3 premium vessels that match your criteria. The Prestige (85ft yacht, $750/hr) is our top pick - it has a hot tub, DJ booth, and enough room for a legendary party. Want me to check availability?",
-  "Great choice! Miami has some of the hottest boats on our platform. I'd recommend The Rum Runner - a 55ft catamaran with a tiki bar and trampolines. It's basically a floating paradise. Shall I book a tour?",
-  "Oh, you're speaking my language! For a bachelor party, nothing beats the Party Pontoon in Key West - triple-decker with a waterslide, diving board, and LED party lights. Your buddy will never forget it. Want pricing details?",
-  "The f***ing Catalina Wine Mixer! We have the Catalina Dreamer - a 45ft sailboat with a WINE CELLAR below deck. It was literally made for this. I can set up a full wine tasting package. Interested?",
-  "I've got options ranging from $275/hr pontoons to $750/hr mega-yachts. Every vessel in our fleet is Prestige Worldwide certified. What's your vibe - chill sunset cruise or full-send party boat?",
-  "Boats N' Hoes isn't just a lifestyle, it's a MOVEMENT. And I'm here to make sure your next boat day is absolutely legendary. Tell me more about what you're looking for!",
+  "I just searched across Boatsetter, GetMyBoat, Click&Boat, and Sailo for you! Found the Sea Breeze - an 80ft luxury motor yacht on Boatsetter at $850/hr in Marina Del Rey with a jacuzzi, full kitchen, and jet skis. Captain included! Want me to compare more options?",
+  "Great choice, captain! I'm pulling listings from all our partner platforms. The Island Time 50ft Party Catamaran on GetMyBoat in Miami ($650/hr) has a tiki bar, trampolines, and LED lighting - plus it's instant bookable! The Rum Runner is another solid option at $550/hr.",
+  "Oh, you're speaking my language! I searched 4 platforms and found the Reel Deal 36ft Center Console on Boatsetter in Key West at $400/hr - tournament-ready with fighting chair, live wells, and captain + mate included. 4.9 stars with 201 reviews. That's the real deal!",
+  "The f***ing Catalina Wine Mixer! I found the Pacific Dream 55ft Luxury Catamaran on Click&Boat at $700/hr - it has a WINE CELLAR, trampolines, full bar, and sails right to Catalina. 4.9 stars. It was literally made for this. Shall I get a quote?",
+  "I've scanned 25,000+ boats across Boatsetter, GetMyBoat, Click&Boat, and Sailo. Prices range from $95/hr jet skis to $2,500/hr mega-yachts. What's your vibe - chill sunset sail, fishing charter, or full-send party boat?",
+  "Boats N' Hoes isn't just a platform, we're the SMARTEST boat search engine on the planet. I aggregate listings from every major platform so you get the best deal. Tell me your location, group size, and budget and I'll find your perfect vessel!",
 ];
 
 type Mode = 'text' | 'voice';
@@ -119,6 +141,24 @@ export default function ConciergePage() {
                 Your Personal Boat Butler &bull; Prestige Worldwide AI
               </p>
             </div>
+          </div>
+
+          {/* Aggregator Badge */}
+          <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-navy/50 border border-cream/10 rounded-full">
+              <Globe className="w-3 h-3 text-electric-blue" />
+              <span className="font-body text-[10px] text-cream/50 tracking-wider">SEARCHES ACROSS</span>
+            </div>
+            {[
+              { name: 'Boatsetter', color: '#4A90D9' },
+              { name: 'GetMyBoat', color: '#2ECC71' },
+              { name: 'Click&Boat', color: '#E67E22' },
+              { name: 'Sailo', color: '#9B59B6' },
+            ].map(s => (
+              <span key={s.name} className="font-body text-[10px] tracking-wider px-2 py-0.5 rounded-full border" style={{ color: s.color, borderColor: `${s.color}40` }}>
+                {s.name}
+              </span>
+            ))}
           </div>
 
           {/* Mode Toggle */}

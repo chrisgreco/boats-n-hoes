@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Anchor, Heart, MessageCircle, Bot, User, Menu, X, Ship } from 'lucide-react';
+import { Anchor, Heart, MessageCircle, Bot, User, Menu, X, Ship, UsersRound } from 'lucide-react';
 
 const navLinks = [
   { href: '/boats', label: 'BOATS', icon: Ship, color: 'bg-electric-blue' },
+  { href: '/bros', label: 'BROS', icon: UsersRound, color: 'bg-lime' },
   { href: '/dating', label: 'DATING', icon: Heart, color: 'bg-hot-pink' },
-  { href: '/chat', label: 'CHAT', icon: MessageCircle, color: 'bg-lime' },
+  { href: '/chat', label: 'CHAT', icon: MessageCircle, color: 'bg-sunset' },
   { href: '/concierge', label: 'AI CONCIERGE', icon: Bot, color: 'bg-gold' },
-  { href: '/profile', label: 'PROFILE', icon: User, color: 'bg-sunset' },
+  { href: '/profile', label: 'PROFILE', icon: User, color: 'bg-deep-purple' },
 ];
 
 export default function Navigation() {

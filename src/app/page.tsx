@@ -25,7 +25,13 @@ import {
   Instagram,
   Twitter,
   Music,
+  ExternalLink,
+  Search,
+  Globe,
+  UserPlus,
 } from 'lucide-react';
+
+import { mockAggregatedListings } from '@/lib/mock-data';
 
 /* ───────────────────────────────────────────
    ANIMATED SECTION WRAPPER
@@ -259,6 +265,225 @@ function MarqueeTicker() {
         ))}
       </div>
     </div>
+  );
+}
+
+/* ───────────────────────────────────────────
+   AGGREGATOR SECTION
+   ─────────────────────────────────────────── */
+function AggregatorSection() {
+  const sources = [
+    { name: 'Boatsetter', color: '#4A90D9' },
+    { name: 'GetMyBoat', color: '#2ECC71' },
+    { name: 'Click&Boat', color: '#E67E22' },
+    { name: 'Sailo', color: '#9B59B6' },
+  ];
+
+  const sourceColorMap: Record<string, string> = {
+    boatsetter: '#4A90D9',
+    getmyboat: '#2ECC71',
+    click_and_boat: '#E67E22',
+    sailo: '#9B59B6',
+  };
+
+  const sourceNameMap: Record<string, string> = {
+    boatsetter: 'Boatsetter',
+    getmyboat: 'GetMyBoat',
+    click_and_boat: 'Click&Boat',
+    sailo: 'Sailo',
+  };
+
+  return (
+    <AnimatedSection className="py-24 px-4 sm:px-8 bg-cream relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-10 right-10 w-40 h-40 border-4 border-navy/5 rounded-full" />
+      <div className="absolute bottom-20 left-10 w-24 h-24 bg-gold/5 rotate-12" />
+
+      <div className="max-w-7xl mx-auto relative">
+        {/* Section Header */}
+        <div className="text-center mb-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 mb-4"
+          >
+            <Globe className="w-5 h-5 text-electric-blue" />
+            <span className="font-body text-sm tracking-[0.4em] uppercase text-ocean">
+              One Search. Every Boat.
+            </span>
+            <Globe className="w-5 h-5 text-electric-blue" />
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="font-display text-6xl sm:text-7xl md:text-8xl text-navy tracking-wider"
+          >
+            SEARCH EVERY
+            <br />
+            BOAT, EVERYWHERE
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="font-body text-navy/60 mt-4 max-w-xl mx-auto"
+          >
+            We aggregate listings from Boatsetter, GetMyBoat, Click&Boat, Sailo, and more.
+            One search. Every boat.
+          </motion.p>
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="w-32 h-1 bg-gold mx-auto mt-4"
+          />
+        </div>
+
+        {/* Source Badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="flex flex-wrap justify-center gap-3 mb-10"
+        >
+          {sources.map((source) => (
+            <span
+              key={source.name}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white brutal-border font-body text-sm text-navy tracking-wider"
+            >
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: source.color }}
+              />
+              {source.name}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Fake Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="max-w-2xl mx-auto mb-16"
+        >
+          <Link href="/boats">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="flex items-center gap-4 px-6 py-5 bg-white brutal-border shadow-[6px_6px_0px_var(--navy)] cursor-pointer transition-all hover:shadow-[4px_4px_0px_var(--navy)]"
+            >
+              <Globe className="w-6 h-6 text-navy/40 shrink-0" />
+              <span className="flex-1 font-body text-lg text-navy/40">
+                Tell our AI what you need...
+              </span>
+              <div className="w-12 h-12 bg-gold flex items-center justify-center brutal-border shrink-0">
+                <Send className="w-5 h-5 text-navy" />
+              </div>
+            </motion.div>
+          </Link>
+        </motion.div>
+
+        {/* Aggregated Listings Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {mockAggregatedListings.slice(0, 4).map((listing, i) => (
+            <motion.div
+              key={listing.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <a
+                href={listing.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  className="group bg-white brutal-border overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-[6px_6px_0px_var(--gold)]"
+                >
+                  {/* Source badge */}
+                  <div className="absolute z-10 top-3 left-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/90 backdrop-blur-sm text-xs font-body font-medium brutal-border">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: sourceColorMap[listing.source] || '#999' }}
+                      />
+                      {sourceNameMap[listing.source] || listing.source}
+                    </span>
+                  </div>
+
+                  {/* Image */}
+                  <div className="relative h-[200px] overflow-hidden">
+                    <Image
+                      src={listing.images[0]}
+                      alt={listing.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent" />
+                    <div className="absolute top-3 right-3">
+                      <ExternalLink className="w-4 h-4 text-white drop-shadow-lg" />
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="p-4">
+                    <h3 className="font-display text-xl text-navy tracking-wider line-clamp-1">
+                      {listing.name}
+                    </h3>
+                    <div className="font-display text-2xl text-gold mt-1">
+                      ${listing.price_per_hour}/hr
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2 text-xs font-body text-navy/60">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-navy/40" />
+                        {listing.location}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3 text-navy/40" />
+                        {listing.capacity}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-gold fill-gold" />
+                        {listing.rating}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              </a>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-12"
+        >
+          <Link href="/boats">
+            <motion.div
+              whileHover={{ x: -3, y: -3 }}
+              whileTap={{ x: 3, y: 3 }}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gold text-navy font-display text-2xl tracking-wider brutal-border brutal-shadow-lg cursor-pointer transition-shadow hover:shadow-[3px_3px_0px_var(--navy)]"
+            >
+              SEARCH ALL BOATS
+              <Search className="w-6 h-6" />
+            </motion.div>
+          </Link>
+        </motion.div>
+      </div>
+    </AnimatedSection>
   );
 }
 
@@ -815,6 +1040,222 @@ function DatingSection() {
 }
 
 /* ───────────────────────────────────────────
+   BOATS N' BROS
+   ─────────────────────────────────────────── */
+function BoatsNBrosSection() {
+  const broPreviewCards = [
+    {
+      name: 'Chad W.',
+      avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Chad&backgroundColor=c0aede',
+      vibe: 'Watersports',
+      distance: '2.4 mi away',
+      sentRequest: false,
+    },
+    {
+      name: 'Tony M.',
+      avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Tony&backgroundColor=ffd5dc',
+      vibe: 'Fishing',
+      distance: '3.1 mi away',
+      sentRequest: true,
+    },
+    {
+      name: 'Mike S.',
+      avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Mike&backgroundColor=d1f4d1',
+      vibe: 'Chill',
+      distance: '1.8 mi away',
+      sentRequest: false,
+    },
+  ];
+
+  const features = [
+    {
+      icon: UserPlus,
+      title: 'Match with Bros',
+      desc: 'Find guys who share your boat vibe. Party bros, fishing bros, chill bros - we got em all.',
+      color: 'text-[#BFFF00]',
+      bg: 'bg-[#BFFF00]/10',
+    },
+    {
+      icon: Users,
+      title: 'Form a Crew',
+      desc: 'Build your squad, plan trips together. Strength in numbers, savings in splitting.',
+      color: 'text-electric-blue',
+      bg: 'bg-electric-blue/10',
+    },
+    {
+      icon: Crown,
+      title: 'Split the Cost',
+      desc: 'Why pay full price when you can split? That $750/hr yacht is way cheaper with 6 bros.',
+      color: 'text-gold',
+      bg: 'bg-gold/10',
+    },
+  ];
+
+  return (
+    <AnimatedSection className="py-24 px-4 sm:px-8 bg-navy relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#BFFF00]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-electric-blue/5 rounded-full blur-3xl" />
+
+      <div className="max-w-7xl mx-auto relative">
+        {/* Section Header */}
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 mb-4"
+          >
+            <Users className="w-5 h-5 text-[#BFFF00]" />
+            <span className="font-body text-sm tracking-[0.4em] uppercase text-[#BFFF00]">
+              Find Your Crew. Split the Bill. Double the Fun.
+            </span>
+            <Users className="w-5 h-5 text-[#BFFF00]" />
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-display text-6xl sm:text-7xl md:text-8xl text-[#BFFF00] tracking-wider"
+          >
+            BOATS N&apos; BROS
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="font-body text-cream/50 mt-4 max-w-lg mx-auto"
+          >
+            Find Your Crew. Split the Bill. Double the Fun.
+          </motion.p>
+        </div>
+
+        {/* Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left - Bro Profile Preview Cards */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center"
+          >
+            <div className="relative w-full max-w-[380px] space-y-4">
+              {broPreviewCards.map((bro, i) => (
+                <motion.div
+                  key={bro.name}
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                  whileHover={{ x: 8 }}
+                  className="relative flex items-center gap-4 p-4 bg-ocean/30 brutal-border cursor-pointer transition-all"
+                >
+                  {/* Avatar */}
+                  <div className="w-16 h-16 rounded-full overflow-hidden brutal-border shrink-0 bg-white">
+                    <Image
+                      src={bro.avatar}
+                      alt={bro.name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full"
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1">
+                    <h4 className="font-display text-xl text-cream tracking-wider">
+                      {bro.name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-body bg-[#BFFF00]/10 text-[#BFFF00] px-2 py-0.5 rounded-full">
+                        {bro.vibe}
+                      </span>
+                      <span className="text-xs font-body text-cream/40">
+                        {bro.distance}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bro Request Sent Tag */}
+                  {bro.sentRequest && (
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                      className="absolute -top-3 -right-3 bg-[#BFFF00] text-navy font-display text-xs px-3 py-1 brutal-border rotate-3"
+                    >
+                      BRO REQUEST SENT!
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+
+              {/* Floating elements */}
+              <motion.div
+                animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute -top-8 -right-4 bg-[#BFFF00] text-navy font-display text-sm px-3 py-1 brutal-border rotate-6 z-10"
+              >
+                DID WE JUST BECOME BEST FRIENDS?
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, 10, 0], rotate: [0, -3, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                className="absolute -bottom-6 -left-4 bg-electric-blue text-navy font-display text-sm px-3 py-1 brutal-border -rotate-3 z-10"
+              >
+                YUP!
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Right - Features */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="space-y-6"
+          >
+            <div className="space-y-4">
+              {features.map((feature) => (
+                <motion.div
+                  key={feature.title}
+                  whileHover={{ x: 8 }}
+                  className="flex items-start gap-4 p-4 bg-ocean/30 brutal-border"
+                >
+                  <div className={`w-10 h-10 ${feature.bg} flex items-center justify-center rounded-lg shrink-0`}>
+                    <feature.icon className={`w-5 h-5 ${feature.color}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-display text-xl text-cream tracking-wider">
+                      {feature.title}
+                    </h4>
+                    <p className="font-body text-sm text-cream/60 mt-1">
+                      {feature.desc}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <Link href="/bros">
+              <motion.div
+                whileHover={{ x: -3, y: -3 }}
+                whileTap={{ x: 3, y: 3 }}
+                className="inline-flex items-center gap-3 px-8 py-4 bg-[#BFFF00] text-navy font-display text-2xl tracking-wider brutal-border brutal-shadow cursor-pointer mt-4 transition-shadow hover:shadow-[3px_3px_0px_var(--cream)]"
+              >
+                FIND YOUR CREW
+                <Users className="w-6 h-6" />
+              </motion.div>
+            </Link>
+          </motion.div>
+        </div>
+      </div>
+    </AnimatedSection>
+  );
+}
+
+/* ───────────────────────────────────────────
    AI CONCIERGE PREVIEW
    ─────────────────────────────────────────── */
 function AIConciergeSection() {
@@ -1019,7 +1460,7 @@ function AIConciergeSection() {
    ─────────────────────────────────────────── */
 function StatsBar() {
   const stats = [
-    { number: '10,000+', label: 'BOATS LISTED', bg: 'bg-gold', text: 'text-navy', icon: Ship },
+    { number: '25,000+', label: 'BOATS AGGREGATED', bg: 'bg-gold', text: 'text-navy', icon: Ship },
     { number: '50,000+', label: 'MATCHES MADE', bg: 'bg-hot-pink', text: 'text-white', icon: Heart },
     { number: '1M+', label: 'HOURS ON WATER', bg: 'bg-electric-blue', text: 'text-navy', icon: Clock },
     { number: '420', label: 'VIBES PER HOUR', bg: 'bg-lime', text: 'text-navy', icon: Zap },
@@ -1234,9 +1675,11 @@ export default function Home() {
     <main className="relative overflow-hidden">
       <HeroSection />
       <MarqueeTicker />
+      <AggregatorSection />
       <HowItWorks />
       <FeaturedBoats />
       <DatingSection />
+      <BoatsNBrosSection />
       <AIConciergeSection />
       <StatsBar />
       <SocialProofBar />
