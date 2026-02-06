@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Navigation from '@/components/Navigation';
 import { mockMessages } from '@/lib/mock-data';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, Sparkles, Anchor, ArrowDown } from 'lucide-react';
+import { Bot, Send, Sparkles, Anchor, Mic, MessageSquare, Phone, Volume2, Waves } from 'lucide-react';
 import type { Message } from '@/lib/types';
+
+// Dynamic import VoiceChat to avoid SSR issues with microphone APIs
+const VoiceChat = dynamic(() => import('@/components/VoiceChat'), { ssr: false });
 
 const suggestedPrompts = [
   'Find me a yacht for 20 people',
@@ -23,7 +27,10 @@ const cannedResponses = [
   "Boats N' Hoes isn't just a lifestyle, it's a MOVEMENT. And I'm here to make sure your next boat day is absolutely legendary. Tell me more about what you're looking for!",
 ];
 
+type Mode = 'text' | 'voice';
+
 export default function ConciergePage() {
+  const [mode, setMode] = useState<Mode>('text');
   const [messages, setMessages] = useState<Message[]>([...mockMessages]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -93,170 +100,260 @@ export default function ConciergePage() {
       <Navigation />
 
       <div className="max-w-4xl mx-auto px-4 pb-4 flex flex-col" style={{ height: 'calc(100vh - 88px)' }}>
-        {/* Header */}
+        {/* Header with Mode Toggle */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-6 flex-shrink-0"
+          className="text-center py-4 flex-shrink-0"
         >
-          <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="flex items-center justify-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full bg-gold/20 border-2 border-gold flex items-center justify-center">
               <Bot className="w-7 h-7 text-gold" />
             </div>
             <div className="text-left">
               <h1 className="font-display text-3xl md:text-4xl text-gold tracking-wider">
-                YOUR PERSONAL BOAT BUTLER
+                CAPTAIN PRESTIGE
               </h1>
               <p className="font-body text-sm text-electric-blue/70 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                Powered by Prestige Worldwide AI
+                Your Personal Boat Butler &bull; Prestige Worldwide AI
               </p>
             </div>
           </div>
-        </motion.div>
 
-        {/* Messages Area */}
-        <div
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto px-2 space-y-4 scrollbar-thin"
-        >
-          <AnimatePresence initial={false}>
-            {messages.map((message, index) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.3, delay: index < mockMessages.length ? 0 : 0.1 }}
-                className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
-              >
-                {message.is_ai ? (
-                  <div className="flex gap-3 max-w-[85%] md:max-w-[75%]">
-                    <div className="flex-shrink-0 w-9 h-9 rounded-full glass-dark border border-gold/30 flex items-center justify-center mt-1">
-                      <Bot className="w-5 h-5 text-gold" />
-                    </div>
-                    <div>
-                      <span className="font-display text-xs text-gold/60 tracking-widest mb-1 block">
-                        PRESTIGE AI
-                      </span>
-                      <div className="glass-dark rounded-2xl rounded-tl-sm px-4 py-3 brutal-border brutal-shadow-sm">
-                        <p className="font-body text-sm text-cream/90 leading-relaxed">
-                          {message.content}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="max-w-[85%] md:max-w-[75%]">
-                    <div className="bg-gold rounded-2xl rounded-tr-sm px-4 py-3 brutal-border brutal-shadow-sm">
-                      <p className="font-body text-sm text-navy font-medium leading-relaxed">
-                        {message.content}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {/* Mode Toggle */}
+          <div className="flex items-center justify-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setMode('text')}
+              className={`flex items-center gap-2 px-5 py-2.5 font-display text-sm tracking-wider brutal-border transition-all ${
+                mode === 'text'
+                  ? 'bg-gold text-navy brutal-shadow-sm'
+                  : 'bg-navy text-cream/60 hover:text-cream hover:bg-navy/80'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              TEXT CHAT
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setMode('voice')}
+              className={`flex items-center gap-2 px-5 py-2.5 font-display text-sm tracking-wider brutal-border transition-all ${
+                mode === 'voice'
+                  ? 'bg-electric-blue text-navy brutal-shadow-sm'
+                  : 'bg-navy text-cream/60 hover:text-cream hover:bg-navy/80'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              VOICE CALL
+            </motion.button>
+          </div>
 
-          {/* Typing Indicator */}
+          {/* Voice mode badge */}
           <AnimatePresence>
-            {isTyping && (
+            {mode === 'voice' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex justify-start"
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                className="mt-3"
               >
-                <div className="flex gap-3 max-w-[75%]">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full glass-dark border border-gold/30 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-gold animate-pulse" />
-                  </div>
-                  <div>
-                    <span className="font-display text-xs text-gold/60 tracking-widest mb-1 block">
-                      PRESTIGE AI
-                    </span>
-                    <div className="glass-dark rounded-2xl rounded-tl-sm px-5 py-4 brutal-border">
-                      <div className="flex gap-1.5">
-                        <motion.div
-                          animate={{ y: [0, -6, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                          className="w-2.5 h-2.5 rounded-full bg-gold/70"
-                        />
-                        <motion.div
-                          animate={{ y: [0, -6, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
-                          className="w-2.5 h-2.5 rounded-full bg-gold/70"
-                        />
-                        <motion.div
-                          animate={{ y: [0, -6, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                          className="w-2.5 h-2.5 rounded-full bg-gold/70"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-electric-blue/10 border border-electric-blue/30 rounded-full">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-2 h-2 rounded-full bg-electric-blue"
+                  />
+                  <span className="font-body text-xs text-electric-blue">
+                    Real-time voice AI powered by ElevenLabs
+                  </span>
+                  <Volume2 className="w-3 h-3 text-electric-blue" />
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+        </motion.div>
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Suggested Prompts */}
-        {messages.length <= mockMessages.length && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-wrap gap-2 justify-center py-3 flex-shrink-0"
-          >
-            {suggestedPrompts.map((prompt) => (
-              <motion.button
-                key={prompt}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => sendMessage(prompt)}
-                className="px-4 py-2 bg-cream text-navy font-body text-xs font-semibold tracking-wide brutal-border brutal-shadow-sm hover:bg-gold hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer"
-              >
-                {prompt}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Chat Input */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          onSubmit={handleSubmit}
-          className="flex-shrink-0 pt-2 pb-2"
-        >
-          <div className="flex gap-3 items-center">
-            <div className="flex-1 relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask your boat butler anything..."
-                className="w-full px-5 py-3.5 bg-cream text-navy font-body text-sm placeholder:text-navy/40 brutal-border brutal-shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:shadow-none focus:translate-x-[2px] focus:translate-y-[2px] transition-all"
-                disabled={isTyping}
-              />
-              <Anchor className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/20" />
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9 }}
-              type="submit"
-              disabled={!inputValue.trim() || isTyping}
-              className="w-14 h-14 bg-gold text-navy flex items-center justify-center brutal-border brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 cursor-pointer"
+        {/* Content Area */}
+        <AnimatePresence mode="wait">
+          {mode === 'voice' ? (
+            <motion.div
+              key="voice"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 glass-dark rounded-2xl brutal-border overflow-hidden flex flex-col"
             >
-              <Send className="w-5 h-5" />
-            </motion.button>
-          </div>
-        </motion.form>
+              <VoiceChat />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="text"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col min-h-0"
+            >
+              {/* Messages Area */}
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-2 space-y-4 scrollbar-thin"
+              >
+                <AnimatePresence initial={false}>
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.3, delay: index < mockMessages.length ? 0 : 0.1 }}
+                      className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
+                    >
+                      {message.is_ai ? (
+                        <div className="flex gap-3 max-w-[85%] md:max-w-[75%]">
+                          <div className="flex-shrink-0 w-9 h-9 rounded-full glass-dark border border-gold/30 flex items-center justify-center mt-1">
+                            <Bot className="w-5 h-5 text-gold" />
+                          </div>
+                          <div>
+                            <span className="font-display text-xs text-gold/60 tracking-widest mb-1 block">
+                              CAPTAIN PRESTIGE
+                            </span>
+                            <div className="glass-dark rounded-2xl rounded-tl-sm px-4 py-3 brutal-border brutal-shadow-sm">
+                              <p className="font-body text-sm text-cream/90 leading-relaxed">
+                                {message.content}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="max-w-[85%] md:max-w-[75%]">
+                          <div className="bg-gold rounded-2xl rounded-tr-sm px-4 py-3 brutal-border brutal-shadow-sm">
+                            <p className="font-body text-sm text-navy font-medium leading-relaxed">
+                              {message.content}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {/* Typing Indicator */}
+                <AnimatePresence>
+                  {isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex justify-start"
+                    >
+                      <div className="flex gap-3 max-w-[75%]">
+                        <div className="flex-shrink-0 w-9 h-9 rounded-full glass-dark border border-gold/30 flex items-center justify-center">
+                          <Bot className="w-5 h-5 text-gold animate-pulse" />
+                        </div>
+                        <div>
+                          <span className="font-display text-xs text-gold/60 tracking-widest mb-1 block">
+                            CAPTAIN PRESTIGE
+                          </span>
+                          <div className="glass-dark rounded-2xl rounded-tl-sm px-5 py-4 brutal-border">
+                            <div className="flex gap-1.5">
+                              <motion.div
+                                animate={{ y: [0, -6, 0] }}
+                                transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                                className="w-2.5 h-2.5 rounded-full bg-gold/70"
+                              />
+                              <motion.div
+                                animate={{ y: [0, -6, 0] }}
+                                transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
+                                className="w-2.5 h-2.5 rounded-full bg-gold/70"
+                              />
+                              <motion.div
+                                animate={{ y: [0, -6, 0] }}
+                                transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                                className="w-2.5 h-2.5 rounded-full bg-gold/70"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Suggested Prompts */}
+              {messages.length <= mockMessages.length && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-wrap gap-2 justify-center py-3 flex-shrink-0"
+                >
+                  {suggestedPrompts.map((prompt) => (
+                    <motion.button
+                      key={prompt}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => sendMessage(prompt)}
+                      className="px-4 py-2 bg-cream text-navy font-body text-xs font-semibold tracking-wide brutal-border brutal-shadow-sm hover:bg-gold hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer"
+                    >
+                      {prompt}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Chat Input */}
+              <motion.form
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                onSubmit={handleSubmit}
+                className="flex-shrink-0 pt-2 pb-2"
+              >
+                <div className="flex gap-3 items-center">
+                  <div className="flex-1 relative">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Ask Captain Prestige anything..."
+                      className="w-full px-5 py-3.5 bg-cream text-navy font-body text-sm placeholder:text-navy/40 brutal-border brutal-shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:shadow-none focus:translate-x-[2px] focus:translate-y-[2px] transition-all"
+                      disabled={isTyping}
+                    />
+                    <Anchor className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/20" />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.9 }}
+                    type="submit"
+                    disabled={!inputValue.trim() || isTyping}
+                    className="w-14 h-14 bg-gold text-navy flex items-center justify-center brutal-border brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 cursor-pointer"
+                  >
+                    <Send className="w-5 h-5" />
+                  </motion.button>
+                  {/* Quick switch to voice */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.9 }}
+                    type="button"
+                    onClick={() => setMode('voice')}
+                    className="w-14 h-14 bg-electric-blue text-navy flex items-center justify-center brutal-border brutal-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex-shrink-0 cursor-pointer"
+                    title="Switch to voice mode"
+                  >
+                    <Phone className="w-5 h-5" />
+                  </motion.button>
+                </div>
+              </motion.form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
