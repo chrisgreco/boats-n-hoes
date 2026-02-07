@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Navigation from '@/components/Navigation';
 import { mockMessages } from '@/lib/mock-data';
@@ -51,7 +52,7 @@ const cannedResponses = [
 
 type Mode = 'text' | 'voice';
 
-export default function ConciergePage() {
+function ConciergeContent() {
   const [mode, setMode] = useState<Mode>('text');
   const [messages, setMessages] = useState<Message[]>([...mockMessages]);
   const [inputValue, setInputValue] = useState('');
@@ -59,6 +60,9 @@ export default function ConciergePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const searchParams = useSearchParams();
+  const hasSentInitialQuery = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -97,6 +101,15 @@ export default function ConciergePage() {
       setMessages((prev) => [...prev, aiMessage]);
     }, 1500 + Math.random() * 1000);
   };
+
+  // Auto-send query from URL params (from /boats AI search bar)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q && !hasSentInitialQuery.current) {
+      hasSentInitialQuery.current = true;
+      setTimeout(() => sendMessage(q), 500);
+    }
+  }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -396,5 +409,13 @@ export default function ConciergePage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+export default function ConciergePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-navy" />}>
+      <ConciergeContent />
+    </Suspense>
   );
 }

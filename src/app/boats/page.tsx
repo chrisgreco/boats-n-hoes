@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
@@ -69,6 +70,7 @@ const chipExamples = [
 type SortOption = 'rating' | 'price_low' | 'price_high' | 'reviews';
 
 export default function BoatsPage() {
+  const router = useRouter();
   const [selectedType, setSelectedType] = useState<string>('All');
   const [activeSource, setActiveSource] = useState<'all' | AggregatorSource>('all');
   const [captainIncluded, setCaptainIncluded] = useState(false);
@@ -205,13 +207,23 @@ export default function BoatsPage() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchValue.trim()) {
+                      router.push(`/concierge?q=${encodeURIComponent(searchValue.trim())}`);
+                    }
+                  }}
                   placeholder="Tell Captain Prestige what you're looking for..."
                   className="flex-1 py-4 bg-transparent font-body text-cream text-lg placeholder:text-cream/40 outline-none"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="m-2 px-6 py-2.5 bg-gold text-navy font-display text-xl tracking-wider border-[3px] border-navy hover:bg-hot-pink hover:text-white transition-colors"
+                  onClick={() => {
+                    if (searchValue.trim()) {
+                      router.push(`/concierge?q=${encodeURIComponent(searchValue.trim())}`);
+                    }
+                  }}
+                  className="m-2 px-6 py-2.5 bg-gold text-navy font-display text-xl tracking-wider border-[3px] border-navy hover:bg-hot-pink hover:text-white transition-colors cursor-pointer"
                 >
                   <Search className="w-5 h-5" />
                 </motion.button>
