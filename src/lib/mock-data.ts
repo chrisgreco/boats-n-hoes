@@ -483,7 +483,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-1',
     source: 'boatsetter',
-    external_url: 'https://www.boatsetter.com/boats/luxury-yacht-marina-del-rey',
+    external_url: 'https://www.boatsetter.com/boat-rentals/marina-del-rey--ca--united-states',
     name: 'Sea Breeze 80ft Luxury Motor Yacht',
     type: 'yacht',
     description: 'Stunning 80ft motor yacht with 4 staterooms, full galley kitchen, flybridge with jacuzzi, and state-of-the-art entertainment system. Perfect for corporate events or milestone celebrations.',
@@ -515,7 +515,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-2',
     source: 'getmyboat',
-    external_url: 'https://www.getmyboat.com/boat-rentals/miami-party-catamaran',
+    external_url: 'https://www.getmyboat.com/boat-rental/Miami--FL--United-States/',
     name: 'Island Time 50ft Party Catamaran',
     type: 'catamaran',
     description: 'The ultimate party platform on the water! Spacious 50ft catamaran with huge deck space, tiki bar, premium sound system, and trampolines on the bow nets. Your floating nightclub in Biscayne Bay.',
@@ -547,7 +547,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-3',
     source: 'boatsetter',
-    external_url: 'https://www.boatsetter.com/boats/key-west-fishing-charter',
+    external_url: 'https://www.boatsetter.com/boat-rentals/key-west--fl--united-states',
     name: 'Reel Deal 36ft Center Console',
     type: 'center_console',
     description: 'Tournament-ready 36ft center console with triple 300HP outboards, top-of-the-line electronics, fighting chair, and live wells. Captain and mate included for an unforgettable fishing experience.',
@@ -579,7 +579,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-4',
     source: 'getmyboat',
-    external_url: 'https://www.getmyboat.com/boat-rentals/san-diego-sunset-sail',
+    external_url: 'https://www.getmyboat.com/boat-rental/San-Diego--CA--United-States/',
     name: 'Golden Hour 42ft Sailing Yacht',
     type: 'sailboat',
     description: 'Elegant 42ft sailing yacht perfect for romantic sunset cruises or intimate gatherings. Teak decks, spacious cockpit, and a below-deck salon with full galley. Wine and cheese packages available.',
@@ -611,7 +611,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-5',
     source: 'click_and_boat',
-    external_url: 'https://www.clickandboat.com/boat-rental/newport-speedboat',
+    external_url: 'https://www.clickandboat.com/us/boat-rental/united-states/newport-beach',
     name: 'Thunder 32ft Performance Speedboat',
     type: 'speedboat',
     description: 'High-performance 32ft speedboat with twin turbo engines reaching 65mph. Wake tower, premium JL Audio system, and seating for 10. Perfect for wakeboarding, tubing, or just ripping across the harbor.',
@@ -643,7 +643,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-6',
     source: 'sailo',
-    external_url: 'https://www.sailo.com/yacht-charter/hamptons-mega-yacht',
+    external_url: 'https://www.sailo.com/boat-rentals/NY/The_Hamptons',
     name: 'Olympus 120ft Mega Yacht',
     type: 'yacht',
     description: 'The pinnacle of maritime luxury. 120ft mega yacht with 5 staterooms, cinema room, infinity-edge jacuzzi, gym, and helipad. Full crew of 8 included. This is how legends vacation.',
@@ -675,7 +675,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-7',
     source: 'getmyboat',
-    external_url: 'https://www.getmyboat.com/boat-rentals/lake-tahoe-pontoon',
+    external_url: 'https://www.getmyboat.com/boat-rental/Lake-Tahoe--United-States/',
     name: 'Lake Life 28ft Luxury Pontoon',
     type: 'pontoon',
     description: 'Premium tri-toon with plush seating, built-in coolers, bluetooth speakers, and a water slide off the back. The ultimate floating living room for Lake Tahoe cruises.',
@@ -707,7 +707,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-8',
     source: 'boatsetter',
-    external_url: 'https://www.boatsetter.com/boats/chicago-party-yacht',
+    external_url: 'https://www.boatsetter.com/boat-rentals/chicago--il--united-states',
     name: 'Windy City 65ft Entertainment Yacht',
     type: 'yacht',
     description: 'Chicago\'s premier party yacht! LED-lit dance floor, professional DJ booth, full commercial bar, and stunning views of the skyline from the upper deck. Corporate events and private parties welcome.',
@@ -739,7 +739,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-9',
     source: 'getmyboat',
-    external_url: 'https://www.getmyboat.com/boat-rentals/jet-ski-miami',
+    external_url: 'https://www.getmyboat.com/boat-rental/Miami-Beach--FL--United-States/',
     name: 'Yamaha WaveRunner VX Cruiser',
     type: 'jet_ski',
     description: 'Brand new 2024 Yamaha WaveRunner! Perfect for blasting across Biscayne Bay. No experience needed - quick orientation included. Rent 1 or up to 6 for your whole crew.',
@@ -770,7 +770,7 @@ export const mockAggregatedListings: AggregatedListing[] = [
   {
     id: 'agg-10',
     source: 'click_and_boat',
-    external_url: 'https://www.clickandboat.com/boat-rental/catalina-island-charter',
+    external_url: 'https://www.clickandboat.com/us/boat-rental/united-states/orange-county',
     name: 'Pacific Dream 55ft Luxury Catamaran',
     type: 'catamaran',
     description: 'Sail to Catalina Island in style aboard this magnificent 55ft catamaran. Two trampolines, full bar, gourmet kitchen, and 3 private cabins. Wine tasting packages available for the f***ing Catalina Wine Mixer.',
