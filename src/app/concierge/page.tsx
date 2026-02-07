@@ -41,20 +41,131 @@ function formatListingResponse(listings: AggregatedListing[]): string {
   return '\n\nHere\'s what I found across our partner platforms:\n• ' + cards.join('\n• ');
 }
 
-const cannedResponses = [
-  "I just searched across Boatsetter, GetMyBoat, Click&Boat, and Sailo for you! Found the Sea Breeze - an 80ft luxury motor yacht on Boatsetter at $850/hr in Marina Del Rey with a jacuzzi, full kitchen, and jet skis. Captain included! Want me to compare more options?",
-  "Great choice, captain! I'm pulling listings from all our partner platforms. The Island Time 50ft Party Catamaran on GetMyBoat in Miami ($650/hr) has a tiki bar, trampolines, and LED lighting - plus it's instant bookable! The Rum Runner is another solid option at $550/hr.",
-  "Oh, you're speaking my language! I searched 4 platforms and found the Reel Deal 36ft Center Console on Boatsetter in Key West at $400/hr - tournament-ready with fighting chair, live wells, and captain + mate included. 4.9 stars with 201 reviews. That's the real deal!",
-  "The f***ing Catalina Wine Mixer! I found the Pacific Dream 55ft Luxury Catamaran on Click&Boat at $700/hr - it has a WINE CELLAR, trampolines, full bar, and sails right to Catalina. 4.9 stars. It was literally made for this. Shall I get a quote?",
-  "I've scanned 25,000+ boats across Boatsetter, GetMyBoat, Click&Boat, and Sailo. Prices range from $95/hr jet skis to $2,500/hr mega-yachts. What's your vibe - chill sunset sail, fishing charter, or full-send party boat?",
-  "Boats N' Hoes isn't just a platform, we're the SMARTEST boat search engine on the planet. I aggregate listings from every major platform so you get the best deal. Tell me your location, group size, and budget and I'll find your perfect vessel!",
-];
+// Source display helpers
+const sourceNameMap: Record<string, string> = {
+  boatsetter: 'Boatsetter',
+  getmyboat: 'GetMyBoat',
+  click_and_boat: 'Click&Boat',
+  sailo: 'Sailo',
+};
+
+// Generate a smart AI response based on query + conversation history
+function generateAIResponse(query: string, prevMessages: Message[]): { text: string; listings: AggregatedListing[] } {
+  const q = query.toLowerCase();
+
+  // Check for booking / link intents — look at last AI message for context
+  const lastAiMsg = [...prevMessages].reverse().find(m => m.is_ai);
+  const isBookingIntent = /\b(book|reserve|rent|charter|hire|get it|sign me up|let'?s do it|let'?s go|i'?m in|i want it|yes|yeah|yep|sure|sounds good|perfect)\b/i.test(q);
+  const isLinkIntent = /\b(link|url|website|take me|go to|open|visit|where|how do i book|how to book)\b/i.test(q);
+  const isCompareIntent = /\b(compare|vs|versus|difference|better|cheaper|which one|alternatives)\b/i.test(q);
+  const isPriceIntent = /\b(price|cost|how much|budget|cheap|affordable|expensive|under \$|per hour|per day)\b/i.test(q);
+
+  // If user wants to book or get a link, find the last mentioned listings
+  if ((isBookingIntent || isLinkIntent) && lastAiMsg) {
+    // Find listings that were mentioned in the last AI message
+    const mentionedListings = mockAggregatedListings.filter(l =>
+      lastAiMsg.content.toLowerCase().includes(l.name.toLowerCase())
+    );
+    if (mentionedListings.length > 0) {
+      const listing = mentionedListings[0];
+      const source = sourceNameMap[listing.source] || listing.source;
+      return {
+        text: `Here you go, captain! Click the link below to book the ${listing.name} on ${source}. They have a ${listing.owner_response_time.toLowerCase()} response time and a ${listing.cancellation_policy} cancellation policy. Tell 'em Captain Prestige sent you! 🚢`,
+        listings: mentionedListings.slice(0, 1),
+      };
+    }
+    return {
+      text: "I'd love to get you booked! Which boat caught your eye? Give me a location, group size, or budget and I'll pull up the best options with direct booking links.",
+      listings: [],
+    };
+  }
+
+  // Search for matching listings
+  const matchedListings = findListings(query);
+
+  // If compare intent, try to find 2+ listings to compare
+  if (isCompareIntent && matchedListings.length >= 2) {
+    const a = matchedListings[0];
+    const b = matchedListings[1];
+    const aSource = sourceNameMap[a.source] || a.source;
+    const bSource = sourceNameMap[b.source] || b.source;
+    return {
+      text: `Great question! Let me break it down:\n\n${a.name} on ${aSource} — $${a.price_per_hour}/hr, ${a.capacity} guests, ${a.rating}★ (${a.review_count} reviews). ${a.captain_included ? 'Captain included!' : 'BYOC.'}\n\n${b.name} on ${bSource} — $${b.price_per_hour}/hr, ${b.capacity} guests, ${b.rating}★ (${b.review_count} reviews). ${b.captain_included ? 'Captain included!' : 'BYOC.'}\n\nBoth are solid picks. Want me to pull up the booking links?`,
+      listings: matchedListings.slice(0, 2),
+    };
+  }
+
+  // If we found listings, return them with context
+  if (matchedListings.length > 0) {
+    const top = matchedListings[0];
+    const source = sourceNameMap[top.source] || top.source;
+    const captain = top.captain_included ? 'Captain included!' : 'Bring your own captain (BYOC).';
+    const instant = top.instant_book ? ' Instant bookable!' : '';
+    const price = top.price_per_hour ? `$${top.price_per_hour}/hr` : `$${top.price_per_day}/day`;
+
+    let intro = `I just searched across Boatsetter, GetMyBoat, Click&Boat, and Sailo for you!`;
+    if (matchedListings.length === 1) {
+      return {
+        text: `${intro}\n\nFound the ${top.name} — a ${top.length_ft}ft ${top.type.replace('_', ' ')} on ${source} at ${price} in ${top.location}. ${top.rating}★ with ${top.review_count} reviews. ${captain}${instant}\n\nTop amenities: ${top.amenities.slice(0, 4).join(', ')}.\n\nClick below to view and book, or tell me to find more options!`,
+        listings: matchedListings,
+      };
+    }
+
+    const others = matchedListings.slice(1).map(l => {
+      const lSource = sourceNameMap[l.source] || l.source;
+      const lPrice = l.price_per_hour ? `$${l.price_per_hour}/hr` : `$${l.price_per_day}/day`;
+      return `${l.name} on ${lSource} (${lPrice}, ${l.capacity} guests, ${l.rating}★)`;
+    }).join('\n• ');
+
+    return {
+      text: `${intro}\n\nTop pick: ${top.name} — ${top.length_ft}ft ${top.type.replace('_', ' ')} on ${source} at ${price} in ${top.location}. ${top.rating}★ (${top.review_count} reviews). ${captain}${instant}\n\nAlso found:\n• ${others}\n\nClick any listing below to book, or ask me to compare!`,
+      listings: matchedListings,
+    };
+  }
+
+  // Price-specific queries with no listing match
+  if (isPriceIntent) {
+    const cheapest = [...mockAggregatedListings].sort((a, b) => (a.price_per_hour ?? 9999) - (b.price_per_hour ?? 9999)).slice(0, 3);
+    return {
+      text: `Looking for the best deals? Here's what I found across all 4 platforms:\n\nPrices range from $${cheapest[0].price_per_hour}/hr (${cheapest[0].name}) to $2,500/hr for mega-yachts. Here are the most affordable options:`,
+      listings: cheapest,
+    };
+  }
+
+  // Generic / greeting queries
+  if (/\b(hi|hello|hey|sup|yo|what'?s up|howdy)\b/i.test(q)) {
+    return {
+      text: "Ahoy, captain! I'm Captain Prestige, your personal boat concierge. I search across Boatsetter, GetMyBoat, Click&Boat, and Sailo to find you the perfect vessel. Tell me your location, group size, budget, or vibe and I'll find your dream boat!",
+      listings: [],
+    };
+  }
+
+  // Catalina Wine Mixer easter egg
+  if (/catalina/i.test(q)) {
+    const catalina = mockAggregatedListings.find(l => l.name.includes('Pacific Dream'));
+    return {
+      text: `The f***ing Catalina Wine Mixer! I found the PERFECT vessel for this legendary event. The Pacific Dream is a 55ft Luxury Catamaran on Click&Boat with a WINE CELLAR, trampolines, full bar, and it sails right to Catalina. 4.9 stars. It was literally made for this. POW!`,
+      listings: catalina ? [catalina] : [],
+    };
+  }
+
+  // Fallback — nothing matched, ask for more details
+  return {
+    text: "I searched all 4 platforms but need a bit more to narrow it down. Try telling me:\n\n• A location (Miami, Key West, Lake Tahoe...)\n• Boat type (yacht, pontoon, catamaran, fishing...)\n• Group size or budget\n• Or your vibe (party, chill, fishing, watersports)\n\nThe more details, the better I can match you!",
+    listings: [],
+  };
+}
 
 type Mode = 'text' | 'voice';
 
+// Extended message type with optional listing attachments
+interface ChatMessage extends Message {
+  listings?: AggregatedListing[];
+}
+
 function ConciergeContent() {
   const [mode, setMode] = useState<Mode>('text');
-  const [messages, setMessages] = useState<Message[]>([...mockMessages]);
+  const [messages, setMessages] = useState<ChatMessage[]>([...mockMessages]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -75,7 +186,7 @@ function ConciergeContent() {
   const sendMessage = (content: string) => {
     if (!content.trim()) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       conversation_id: '2',
       sender_id: '1',
@@ -88,18 +199,23 @@ function ConciergeContent() {
     setInputValue('');
     setIsTyping(true);
 
+    // Use smart AI response generation
     setTimeout(() => {
-      const aiMessage: Message = {
-        id: `ai-${Date.now()}`,
-        conversation_id: '2',
-        sender_id: 'ai',
-        content: cannedResponses[Math.floor(Math.random() * cannedResponses.length)],
-        is_ai: true,
-        created_at: new Date().toISOString(),
-      };
+      setMessages((prev) => {
+        const { text, listings } = generateAIResponse(content, prev);
+        const aiMessage: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          conversation_id: '2',
+          sender_id: 'ai',
+          content: text,
+          is_ai: true,
+          created_at: new Date().toISOString(),
+          listings: listings.length > 0 ? listings : undefined,
+        };
+        return [...prev, aiMessage];
+      });
       setIsTyping(false);
-      setMessages((prev) => [...prev, aiMessage]);
-    }, 1500 + Math.random() * 1000);
+    }, 1200 + Math.random() * 800);
   };
 
   // Auto-send query from URL params (from /boats AI search bar)
@@ -266,19 +382,67 @@ function ConciergeContent() {
                       className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
                     >
                       {message.is_ai ? (
-                        <div className="flex gap-3 max-w-[85%] md:max-w-[75%]">
+                        <div className="flex gap-3 max-w-[90%] md:max-w-[80%]">
                           <div className="flex-shrink-0 w-9 h-9 rounded-full glass-dark border border-gold/30 flex items-center justify-center mt-1">
                             <Bot className="w-5 h-5 text-gold" />
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <span className="font-display text-xs text-gold/60 tracking-widest mb-1 block">
                               CAPTAIN PRESTIGE
                             </span>
                             <div className="glass-dark rounded-2xl rounded-tl-sm px-4 py-3 brutal-border brutal-shadow-sm">
-                              <p className="font-body text-sm text-cream/90 leading-relaxed">
+                              <p className="font-body text-sm text-cream/90 leading-relaxed whitespace-pre-line">
                                 {message.content}
                               </p>
                             </div>
+                            {/* Listing cards attached to AI messages */}
+                            {(message as ChatMessage).listings && (message as ChatMessage).listings!.map((listing) => {
+                              const srcColor: Record<string, string> = { boatsetter: '#4A90D9', getmyboat: '#2ECC71', click_and_boat: '#E67E22', sailo: '#9B59B6' };
+                              const srcName = sourceNameMap[listing.source] || listing.source;
+                              return (
+                                <a
+                                  key={listing.id}
+                                  href={listing.external_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block group"
+                                >
+                                  <motion.div
+                                    whileHover={{ y: -2, x: 2 }}
+                                    className="flex items-center gap-3 p-3 bg-ocean/40 border-2 border-cream/10 rounded-lg hover:border-gold/50 transition-all cursor-pointer"
+                                  >
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-cream/20 flex-shrink-0 relative">
+                                      <img src={listing.images[0]} alt={listing.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="px-1.5 py-0.5 text-[9px] font-display tracking-wider text-white rounded" style={{ backgroundColor: srcColor[listing.source] || '#999' }}>
+                                          {srcName.toUpperCase()}
+                                        </span>
+                                        <span className="font-body text-[10px] text-gold">
+                                          {listing.rating}★ ({listing.review_count})
+                                        </span>
+                                      </div>
+                                      <h4 className="font-display text-sm text-cream tracking-wider truncate">
+                                        {listing.name}
+                                      </h4>
+                                      <div className="flex items-center gap-3 mt-0.5">
+                                        <span className="font-display text-gold text-sm">
+                                          {listing.price_per_hour ? `$${listing.price_per_hour}/hr` : `$${listing.price_per_day}/day`}
+                                        </span>
+                                        <span className="font-body text-[10px] text-cream/40">
+                                          {listing.capacity} guests · {listing.length_ft}ft
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                                      <ExternalLink className="w-4 h-4 text-cream/30 group-hover:text-gold transition-colors" />
+                                      <span className="font-display text-[8px] text-cream/30 tracking-wider group-hover:text-gold transition-colors">BOOK</span>
+                                    </div>
+                                  </motion.div>
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       ) : (
